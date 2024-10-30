@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio Culto para Casais Ieadpe 2024</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #add8e6;
+            color: #003366;
+            display: flex;
+            flex-direction: row;
+        }
+        h1 {
+            color: #ff0000;
+            font-size: 2em;
+            margin: 20px;
+            flex: 1;
+            text-align: center;
+        }
+        .menu-toggle {
+            background-color: #003366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 20px;
+            transition: background-color 0.3s;
+        }
+        .menu-toggle:hover {
+            background-color: #00509e;
+        }
+        .menu {
+            width: 200px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-right: 2px solid #003366;
+            display: none;
+            flex-shrink: 0;
+        }
+        .form-container {
+            margin: 20px;
+            padding: 20px;
+            border: 2px solid #003366;
+            background-color: #fff;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            flex: 1;
+        }
+        button {
+            background-color: #003366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #00509e;
+        }
+        input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #003366;
+            border-radius: 5px;
+        }
+        input:focus {
+            border-color: #00509e;
+            outline: none;
+        }
+        .sorteados {
+            margin: 10px 0;
+        }
+        .excluir {
+            color: red;
+            cursor: pointer;
+            margin-left: 5px;
+            padding: 2px 6px;
+            background-color: #ffcccc;
+            border-radius: 4px;
+            border: 1px solid #ff0000;
+            display: inline-block;
+        }
+        .excluir:hover {
+            background-color: #ff9999;
+        }
+        .resultado-sorteio {
+            font-size: 2em;
+            color: #ff0000;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .coracao {
+            color: #ff69b4; /* Cor rosa para o coração */
+            font-size: 1.5em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sorteio Culto para Casais Ieadpe 2024</h1>
+    <button class="menu-toggle" onclick="toggleMenu()">Menu</button>
+
+    <div class="menu">
+        <button onclick="mostrarForm('local')">Cadastrar Casal ❤️</button>
+        <button onclick="mostrarForm('visitante')">Cadastrar Casal ❤️❤️</button>
+        <button onclick="mostrarForm('mocidade')">Cadastrar Mocidade Local</button>
+        <button onclick="mostrarSorteio()">Sorteio</button>
+        <button onclick="mostrarForm('consultarTodos')">Consultar Todos</button>
+    </div>
+
+    <div class="form-container" id="cadastroLocal">
+        <h2>Cadastrar Casais Locais</h2>
+        <div id="localInputs"></div>
+        <button onclick="cadastrar('local')">Cadastrar</button>
+    </div>
+
+    <div class="form-container" id="cadastroVisitante">
+        <h2>Cadastrar Casais Visitantes</h2>
+        <div id="visitanteInputs"></div>
+        <button onclick="cadastrar('visitante')">Cadastrar</button>
+    </div>
+
+    <div class="form-container" id="cadastroMocidade">
+        <h2>Cadastrar Mocidade Local</h2>
+        <div id="mocidadeInputs"></div>
+        <button onclick="cadastrar('mocidade')">Cadastrar</button>
+    </div>
+
+    <div class="form-container" id="sorteioContainer" style="display: none;">
+        <h2>Sorteio</h2>
+        <button onclick="sorteio('local')">Sortear Casal ❤️</button>
+        <button onclick="sorteio('visitante')">Sortear Casal ❤️❤️</button>
+        <button onclick="sorteio('mocidade')">Sortear Mocidade Local</button> <!-- Botão para sorteio de mocidade -->
+        <div class="resultado-sorteio" id="resultadoSorteioLocal"></div>
+        <div class="resultado-sorteio" id="resultadoSorteioVisitante"></div>
+        <div class="resultado-sorteio" id="resultadoSorteioMocidade"></div>
+        <div id="sorteadosLocal" class="sorteados"></div>
+        <div id="sorteadosVisitante" class="sorteados"></div>
+        <div id="sorteadosMocidade" class="sorteados"></div>
+    </div>
+
+    <div class="form-container" id="consultarTodosContainer">
+        <h2>Consultar Todos</h2>
+        <div id="todosOsCadastros"></div>
+    </div>
+
+    <script>
+        let casaisLocais = JSON.parse(localStorage.getItem('casaisLocais')) || [];
+        let casaisVisitantes = JSON.parse(localStorage.getItem('casaisVisitantes')) || [];
+        let mocidadeLocal = JSON.parse(localStorage.getItem('mocidadeLocal')) || [];
+
+        window.onload = function() {
+            atualizarListaCadastros();
+        };
+
+        function toggleMenu() {
+            const menu = document.querySelector('.menu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function atualizarListaCadastros() {
+            const todosOsCadastros =
+                `<h3>Casais Locais:</h3>
+                ${casaisLocais.map(casal => `${casal} <span class="excluir" onclick="excluirCadastro('${casal}', 'local')">X</span>`).join('<br>') || "Nenhum casal cadastrado."}
+                <h3>Casais Visitantes:</h3>
+                ${casaisVisitantes.map(casal => `${casal} <span class="excluir" onclick="excluirCadastro('${casal}', 'visitante')">X</span>`).join('<br>') || "Nenhum casal cadastrado."}
+                <h3>Mocidade Local:</h3>
+                ${mocidadeLocal.map(mocidade => `${mocidade} <span class="excluir" onclick="excluirCadastro('${mocidade}', 'mocidade')">X</span>`).join('<br>') || "Nenhuma mocidade cadastrada."}`;
+
+            document.getElementById('todosOsCadastros').innerHTML = todosOsCadastros;
+        }
+
+        function mostrarForm(tipo) {
+            const forms = document.querySelectorAll('.form-container');
+            forms.forEach(form => form.style.display = 'none');
+
+            if (tipo === 'consultarTodos') {
+                document.getElementById('consultarTodosContainer').style.display = 'block';
+                atualizarListaCadastros();
+            } else {
+                document.getElementById(`cadastro${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`).style.display = 'block';
+                gerarInputs(tipo);
+            }
+        }
+
+        function mostrarSorteio() {
+            const forms = document.querySelectorAll('.form-container');
+            forms.forEach(form => form.style.display = 'none');
+            document.getElementById('sorteioContainer').style.display = 'block';
+        }
+
+        function gerarInputs(tipo) {
+            const container = document.getElementById(`${tipo}Inputs`);
+            container.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `${tipo === 'local' ? 'Local' : tipo === 'visitante' ? 'Visitante' : 'Mocidade'} ${i + 1}`;
+                input.id = `${tipo}Input${i + 1}`;
+                container.appendChild(input);
+            }
+        }
+
+        function cadastrar(tipo) {
+            const nomes = [];
+            for (let i = 1; i <= 10; i++) {
+                const input = document.getElementById(`${tipo}Input${i}`);
+                if (input && input.value) {
+                    nomes.push(input.value);
+                    input.value = ''; // Limpar o campo após o cadastro
+                }
+            }
+
+            if (tipo === 'local') {
+                casaisLocais = casaisLocais.concat(nomes);
+                localStorage.setItem('casaisLocais', JSON.stringify(casaisLocais));
+            } else if (tipo === 'visitante') {
+                casaisVisitantes = casaisVisitantes.concat(nomes);
+                localStorage.setItem('casaisVisitantes', JSON.stringify(casaisVisitantes));
+            } else if (tipo === 'mocidade') {
+                mocidadeLocal = mocidadeLocal.concat(nomes);
+                localStorage.setItem('mocidadeLocal', JSON.stringify(mocidadeLocal));
+            }
+
+            atualizarListaCadastros();
+        }
+
+        function excluirCadastro(nome, tipo) {
+            if (tipo === 'local') {
+                casaisLocais = casaisLocais.filter(casal => casal !== nome);
+                localStorage.setItem('casaisLocais', JSON.stringify(casaisLocais));
+            } else if (tipo === 'visitante') {
+                casaisVisitantes = casaisVisitantes.filter(casal => casal !== nome);
+                localStorage.setItem('casaisVisitantes', JSON.stringify(casaisVisitantes));
+            } else if (tipo === 'mocidade') {
+                mocidadeLocal = mocidadeLocal.filter(mocidade => mocidade !== nome);
+                localStorage.setItem('mocidadeLocal', JSON.stringify(mocidadeLocal));
+            }
+
+            atualizarListaCadastros();
+        }
+
+        function sorteio(tipo) {
+            let sorteados = [];
+            if (tipo === 'local') {
+                sorteados = casaisLocais.slice();
+            } else if (tipo === 'visitante') {
+                sorteados = casaisVisitantes.slice();
+            } else if (tipo === 'mocidade') {
+                sorteados = mocidadeLocal.slice(); // Obter lista de mocidade
+            }
+
+            if (sorteados.length > 0) {
+                const randomIndex = Math.floor(Math.random() * sorteados.length);
+                const sorteado = sorteados[randomIndex];
+
+                if (tipo === 'local') {
+                    document.getElementById('resultadoSorteioLocal').innerText = `Sorteado: ${sorteado}`;
+                    document.getElementById('sorteadosLocal').innerHTML += `${sorteado}<br>`;
+                } else if (tipo === 'visitante') {
+                    document.getElementById('resultadoSorteioVisitante').innerText = `Sorteado: ${sorteado}`;
+                    document.getElementById('sorteadosVisitante').innerHTML += `${sorteado}<br>`;
+                } else {
+                    document.getElementById('resultadoSorteioMocidade').innerText = `Sorteado: ${sorteado}`;
+                    document.getElementById('sorteadosMocidade').innerHTML += `${sorteado}<br>`;
+                }
+            } else {
+                alert(`Nenhum ${tipo === 'mocidade' ? 'mocidade' : 'casal'} cadastrado para sorteio!`);
+            }
+        }
+    </script>
+</body>
+</html>
